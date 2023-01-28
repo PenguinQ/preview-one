@@ -1,9 +1,6 @@
 import { css } from '@emotion/react';
 
-export const ProductContainer = css`
-  display: flex;
-  flex-direction: column;
-
+export const Container = css`
   [data-kl-product] {
     color: inherit;
     text-decoration: none;

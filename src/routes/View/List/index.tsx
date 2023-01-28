@@ -1,91 +1,83 @@
 /** @jsxImportSource @emotion/react */
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Container, ProductContainer } from './styles';
-import sampleData from './data';
-
+import BrikContext from '../../../providers';
+import { ENDPOINT } from '../../../common/constant';
 import Pagination from '../../../components/Pagination';
+import { ProductContainer } from './styles';
+
+const paginate = (items: any, page: number, per_page: number) => {
+  let pages = page || 1;
+  let per_pages = per_page || 10;
+  let offset = (page - 1) * per_page;
+
+  const paginatedItems = items.slice(offset).slice(0, per_page);
+  const total_pages = Math.ceil(items.length / per_page);
+
+  return {
+    page: pages,
+    per_page: per_pages,
+    prev_page: pages - 1 ? pages - 1 : null,
+    next_page: (total_pages > pages) ? pages + 1 : null,
+    total: items.length,
+    total_pages: total_pages,
+    data: paginatedItems
+  };
+};
 
 const List = () => {
-  const [products, setProducts]: any = useState(null);
+  // @ts-ignore
+  const { contextValue, setContextValue } = useContext(BrikContext);
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(6);
-
-  const paginate = (items: any, page: number, per_page: number) => {
-    let pages = page || 1;
-    let per_pages = per_page || 10;
-    let offset = (page - 1) * per_page;
-
-    const paginatedItems = items.slice(offset).slice(0, per_page);
-    const total_pages = Math.ceil(items.length / per_page);
-
-    return {
-      page: page,
-      per_page: per_page,
-      pre_page: page - 1 ? page - 1 : null,
-      next_page: (total_pages > page) ? page + 1 : null,
-      total: items.length,
-      total_pages: total_pages,
-      data: paginatedItems
-    };
-  };
-
-  // console.log(products.length / 3);
-  // console.log(paginate(products, 1, 3));
-  // console.log(paginate(products, 2, 3));
+  const [perPage, setPerPage] = useState(3);
+  const [products, setProducts]: any = useState(null);
+  const [pagedProducts, setPagedProducts]: any = useState(null);
 
   useEffect(() => {
-    // const getProducts = async () => {
-    //   const query = await axios.get('https://crudcrud.com/api/9bba4cfd4a2d4dc8988c123140824b8d/products');
-    //   const { data } = query;
+    getProducts();
+  }, []);
 
-    //   setProducts(data);
-    // }
+  const getProducts = async () => {
+    try {
+      const query = await axios.get(`https://crudcrud.com/api/${ENDPOINT}/products`);
+      const { data } = query;
 
-    // getProducts();
-    const paginated = paginate(sampleData, page, perPage);
+      setProducts(data);
+      setPagedProducts(paginate(data, page, perPage));
+    } catch (error) {
+      throw Error(error as any);
+    }
+  };
 
-    setProducts(paginated.data);
+  useEffect(() => {
+    if (products && pagedProducts) {
+      const paginated = paginate(products, page, perPage);
+
+      setPagedProducts(paginated);
+    }
   }, [page, perPage]);
 
-  const handlePage = (page: number) => {
-    setPage(page);
-  };
-
-  const renderPager = () => {
-    const dom = [];
-
-    for (let i = 1; i <= Math.ceil(sampleData.length/perPage); i++) {
-      dom.push(
-        <button onClick={() => handlePage(i)}>Button {i}</button>
-      );
-    }
-
-    return dom;
-  };
-
-  return (
+  return products && products.length ? (
     <>
-      <div css={Container}>
-        <div>
-          {renderPager()}
-          <Pagination pages={Math.ceil(sampleData.length/perPage)} />
-        </div>
-        <div css={ProductContainer}>
-          {products && products.map((product: any) => (
-            // @ts-ignore
-            <Link key={product.id} to={`detail/${product.id}`} data-kl-product>
-              {/* <div>{product.id}</div> */}
-              {/* <div>{product.CategoryId}</div> */}
-              {/* <div>{product.image}</div> */}
-              <picture>
-                <img src="https://images.ctfassets.net/hrltx12pl8hq/3j5RylRv1ZdswxcBaMi0y7/b84fa97296bd2350db6ea194c0dce7db/Music_Icon.jpg" alt={product.name} />
-              </picture>
-              <div>
-                <h3 data-kl-name>{product.name} {product.id}</h3>
-                <p data-kl-description>{product.description}</p>
-                <dl data-kl-list>
+      <Pagination
+        page={page}
+        numberOfPages={Math.ceil(products.length/perPage)}
+        onClick={(e) => setPage(e)}
+        onClickNext={() => pagedProducts.next_page && setPage(pagedProducts.next_page)}
+        onClickPrev={() => pagedProducts.prev_page && setPage(pagedProducts.prev_page)}
+      />
+      <div css={ProductContainer}>
+        {pagedProducts.data.map((product: any) => (
+          <Link key={product.id} to={`detail?id=${product._id}`} data-kl-product>
+            <picture>
+              <img src={product.image} alt={product.name} />
+            </picture>
+            <div data-kl-info>
+              <h3 data-kl-name>{product.name} {product.id}</h3>
+              <p data-kl-description>{product.description}</p>
+              <div data-kl-detail>
+                <dl>
                   <dt>Category</dt>
                   <dd>{product.categoryName}</dd>
                   <dt>SKU</dt>
@@ -93,9 +85,7 @@ const List = () => {
                   <dt>Price</dt>
                   <dd>{product.harga}</dd>
                 </dl>
-              </div>
-              <div>
-                <dl data-kl-list>
+                <dl>
                   <dt>Weight</dt>
                   <dd>{product.weight}</dd>
                   <dt>Width</dt>
@@ -106,12 +96,21 @@ const List = () => {
                   <dd>{product.height}</dd>
                 </dl>
               </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+          </Link>
+        ))}
       </div>
+      <Pagination
+        page={page}
+        numberOfPages={Math.ceil(products.length/perPage)}
+        onClick={(e) => setPage(e)}
+        onClickNext={() => pagedProducts.next_page && setPage(pagedProducts.next_page)}
+        onClickPrev={() => pagedProducts.prev_page && setPage(products.prev_page)}
+      />
     </>
-  )
+  ) : (
+    <h2 style={{ textAlign: 'center', margin: '64px 0' }}>Looks like there's no item yet, try adding a new product!</h2>
+  );
 };
 
 export default List;

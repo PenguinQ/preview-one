@@ -19,7 +19,7 @@ const routes = createBrowserRouter([
         element: <Add />,
       },
       {
-        path: ':id',
+        path: 'detail',
         element: <Detail />,
       },
     ],

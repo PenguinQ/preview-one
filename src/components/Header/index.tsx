@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useMatch } from 'react-router-dom';
 import { Container } from './styles';
 
 interface HeaderItemProps {
@@ -16,6 +16,8 @@ const Header = (props: HeaderProps) => {
   const { items } = props;
   const [expand, setExpand] = useState(false);
   const containerRef = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  const strippedPath = pathname === '/' ? pathname : pathname.substring(1);
 
   const handleClickOutside = useCallback(
     (e: any) => {
@@ -38,6 +40,10 @@ const Header = (props: HeaderProps) => {
     };
   }, [expand, handleClickOutside]);
 
+  const handleClick = () => {
+    expand && setExpand(false);
+  };
+
   return (
     <header
       ref={containerRef}
@@ -52,8 +58,16 @@ const Header = (props: HeaderProps) => {
         </button>
       </div>
       <nav data-kl-nav>
-        {items.length &&
-          items.map((item) => <Link to={item.url}>{item.title}</Link>)}
+        {items.length && items.map((item, key) => (
+          <Link
+            key={key}
+            to={item.url}
+            data-active={strippedPath.startsWith(item.url) ? true : undefined}
+            onClick={handleClick}
+          >
+            {item.title}
+          </Link>
+        ))}
       </nav>
     </header>
   );

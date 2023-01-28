@@ -2,7 +2,12 @@
 import { forwardRef } from 'react';
 import { Container } from './styles';
 
-const Button = forwardRef((props: any, ref) => {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  full?: boolean,
+  margin?: string;
+}
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   const {
     children,
     full = false,
@@ -14,11 +19,10 @@ const Button = forwardRef((props: any, ref) => {
   return (
     <button
       ref={ref}
-      data-p-button
       css={Container}
-      type={type}
-      data-p-full={full ? true : undefined}
+      data-mt-full={full ? full : undefined}
       style={{ margin }}
+      type={type}
       {...otherProps}
     >
       {children}

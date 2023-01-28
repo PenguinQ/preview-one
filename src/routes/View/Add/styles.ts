@@ -4,6 +4,7 @@ export const Container = css`
   display: flex;
   flex-direction: column;
   gap: 20px;
+  margin-bottom: 32px;
 
   .form-group {
     display: flex;
@@ -11,6 +12,7 @@ export const Container = css`
     gap: 20px;
 
     > * {
+      width: 100%;
       flex-grow: 1;
     }
   }
